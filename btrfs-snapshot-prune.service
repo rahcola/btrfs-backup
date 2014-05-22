@@ -1,0 +1,12 @@
+[Unit]
+Description=Prune BTRFS snapshots
+Requisite=local-fs.target
+After=local-fs.target
+Before=btrfs-snapshot.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/btrfs-snapshot-prune.sh /mnt/pool-1/.snapshots
+
+[Install]
+WantedBy=btrfs-snapshot.service

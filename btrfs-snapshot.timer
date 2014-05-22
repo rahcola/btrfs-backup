@@ -1,0 +1,12 @@
+[Unit]
+Description=Hourly BTRFS snapshots
+Requisite=local-fs.target
+After=local-fs.target
+
+[Timer]
+OnCalendar=hourly
+AccuracySec=30min
+Persistent=false
+
+[Install]
+WantedBy=local-fs.target
