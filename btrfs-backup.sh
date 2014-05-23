@@ -5,16 +5,12 @@ POOL=$(realpath -e "$1")
 BACKUP=$(realpath -e "$2")
 
 for VOL in $(ls -1 ${POOL}); do
-    NEWEST=${POOL}/.snapshots/$(ls -1 ${POOL}/.snapshots | egrep ${VOL} | tail -1)
-    NEWEST_BACKUP=${POOL}/.snapshots/$(ls -1 ${BACKUP} | egrep ${VOL} | tail -1)
+    NEWEST=${POOL}/.snapshots/$(ls -1 ${POOL}/.snapshots | egrep ${VOL}-[0-9] | tail -1)
+    NEWEST_BACKUP=$(realpath -e ${POOL}/.snapshots/${VOL}-latest-backup)
 
     [ ${NEWEST} = ${NEWEST_BACKUP} ] && echo "${VOL} up to date" && continue
 
-    if [ -d ${NEWEST_BACKUP} ]
-    then
-        echo "btrfs send -p ${NEWEST_BACKUP} ${NEWEST} | btrfs receive ${BACKUP}"
-    else
-        echo "btrfs send ${NEWEST} | btrfs receive ${BACKUP}"
-    fi
+    btrfs send -p ${NEWEST_BACKUP} ${NEWEST} | btrfs receive ${BACKUP}
+    ln -sfn ${NEWEST} ${POOL}/.snapshots/${VOL}-latest-backup
 done
 sync
