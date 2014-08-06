@@ -4,13 +4,14 @@ set -e
 POOL=$(realpath -e "$1")
 BACKUP=$(realpath -e "$2")
 
-for VOL in $(ls -1 ${POOL}); do
-    NEWEST=${POOL}/.snapshots/$(ls -1 ${POOL}/.snapshots | egrep ${VOL}-[0-9] | tail -1)
-    NEWEST_BACKUP=$(realpath -e ${POOL}/.snapshots/${VOL}-latest-backup)
+for L in $(ls -1 ${POOL} | grep "latest-backup$"); do
+    LATEST_BACKUP=$(realpath -e ${POOL}/${L})
+    VOL=$(basename ${LATEST_BACKUP} | cut -d '-' -f 1)
+    LATEST=$(realpath -e ${POOL}/$(ls -1 ${POOL} | grep ${VOL} | grep -v "latest-backup$" | sort | tail -1))
 
-    [ ${NEWEST} = ${NEWEST_BACKUP} ] && echo "${VOL} up to date" && continue
+    [ ${LATEST} = ${LATEST_BACKUP} ] && echo "${VOL} up to date" && continue
 
-    btrfs send -p ${NEWEST_BACKUP} ${NEWEST} | btrfs receive ${BACKUP}
-    ln -sfn ${NEWEST} ${POOL}/.snapshots/${VOL}-latest-backup
+    btrfs send -p ${LATEST_BACKUP} ${LATEST} | btrfs receive ${BACKUP}
+    sync
+    ln -sfn ${LATEST} ${POOL}/${VOL}-latest-backup
 done
-sync
