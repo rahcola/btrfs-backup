@@ -1,0 +1,8 @@
+[Unit]
+Description=BTRFS snapshot of %I
+BindsTo=%i.mount
+After=%i.mount
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/btrfs-snapshot.sh %I %I/snapshots 24

@@ -1,0 +1,12 @@
+[Unit]
+Description=Hourly BTRFS snapshots of %I
+BindsTo=%i.mount
+After=%i.mount
+
+[Timer]
+OnCalendar=hourly
+AccuracySec=30min
+Persistent=false
+
+[Install]
+WantedBy=%i.mount

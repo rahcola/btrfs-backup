@@ -1,9 +1,0 @@
-[Unit]
-Description=BTRFS snapshots
-Requisite=local-fs.target
-After=local-fs.target
-
-[Service]
-Type=oneshot
-Environment=POOL=/mnt/pool-1
-ExecStart=/bin/sh -c '/usr/local/bin/btrfs-snapshot.sh ${POOL}/.snapshots $(echo ${POOL}/*)'

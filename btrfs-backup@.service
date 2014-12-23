@@ -1,0 +1,11 @@
+[Unit]
+Description=Backup BTRFS volume %I
+BindsTo=mnt-pool\x2d1\x2dbackup.mount
+After=mnt-pool\x2d1\x2dbackup.mount
+BindsTo=%i.mount
+After=%i.mount
+After=btrfs-snapshot.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/btrfs-backup.sh %I/snapshots /mnt/pool-1-backup

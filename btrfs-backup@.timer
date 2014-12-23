@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily BTRFS backup of %I
+BindsTo=%i.mount
+After=%i.mount
+After=btrfs-snapshot.service
+
+[Timer]
+OnCalendar=daily
+AccuracySec=30min
+Persistent=false
+
+[Install]
+WantedBy=btrfs-snapshot@%i.timer

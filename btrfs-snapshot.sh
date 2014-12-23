@@ -1,38 +1,31 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
-TO=$(realpath -e "$1")
-NOW=$(date +'%s')
-ISO_NOW=$(date +'%Y-%m-%dT%H:%M:%S')
-PRUNE_LIMIT=$((60 * 60 * 24))
-shift
 
-function prune() {
-    VOL="$1"
-    LATEST_BACKUP=$(realpath -e "${TO}/${VOL}-latest-backup")
-    for S in $(echo "${TO}/${VOL}*"); do
-        SNAPSHOT=$(realpath -e ${S})
-        if [ ${SNAPSHOT} = ${LATEST_BACKUP} ]; then
-            continue
-        fi
+if [ "$#" -ne 3 ]; then
+    printf 'Usage: %s <subvolume> <destination> <retain>\n' "$0"
+    exit 1
+fi
 
-        TIME=$(date -d$(echo $(basename ${SNAPSHOT}) | cut -d '-' -f 2-) +'%s')
-        if [ $((${NOW} - ${TIME})) -ge ${PRUNE_LIMIT} ]; then
-            btrfs subvol delete ${SNAPSHOT}
-        fi
-    done
-}
+VOLUME_PATH=$(realpath -e "$1")
+TO=$(realpath -e "$2")
+RETAIN="$3"
 
-function snapshot() {
-    VOL="$1"
-    VOL_FULL="$2"
-    btrfs subvol snapshot -r "${VOL_FULL}" "${TO}/${VOL}-${ISO_NOW}"
-}
+if ! btrfs subvolume show "${VOLUME_PATH}" > /dev/null; then
+    printf 'not a subvolume: %s\n' "${VOLUME_PATH}"
+    exit 1
+fi
 
-for V in "$@"; do
-    VOL_FULL=$(realpath -e ${V})
-    VOL=$(basename ${VOL_FULL})
-    prune ${VOL}
-    snapshot ${VOL} ${VOL_FULL}
+if [ ! -d "${TO}" ]; then
+    printf 'not a directory: %s\n' "${TO}"
+    exit 1
+fi
+
+VOLUME=$(btrfs subvolume show "${VOLUME_PATH}" | grep "Name:" | awk '{print $2}')
+btrfs subvolume snapshot -r "${VOLUME_PATH}" "${TO}/${VOLUME}-$(date -u -Iseconds)"
+
+PATTERN="[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}+[0-9]\{4\}"
+for VOL in $(ls "${TO}" | grep "^${VOLUME}-${PATTERN}\$" | sort | head -n -"${RETAIN}"); do
+    btrfs subvolume delete "${TO}/${VOL}"
 done
 sync
