@@ -7,8 +7,8 @@ if [ "$#" -ne 3 ]; then
     exit 1
 fi
 
-VOLUME_PATH=$(realpath -e "$1")
-TO=$(realpath -e "$2")
+VOLUME_PATH=$(readlink -e "$1")
+TO=$(readlink -e "$2")
 RETAIN="$3"
 
 if ! btrfs subvolume show "${VOLUME_PATH}" > /dev/null; then
@@ -21,11 +21,17 @@ if [ ! -d "${TO}" ]; then
     exit 1
 fi
 
+case $3 in
+    ''|*[!0-9]*)
+        printf 'not a number: %s\n' "$3"
+        exit 0
+        ;;
+esac
+
 VOLUME=$(btrfs subvolume show "${VOLUME_PATH}" | grep "Name:" | awk '{print $2}')
 btrfs subvolume snapshot -r "${VOLUME_PATH}" "${TO}/${VOLUME}-$(date -u -Iseconds)"
 
-PATTERN="[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}+[0-9]\{4\}"
-for VOL in $(ls "${TO}" | grep "^${VOLUME}-${PATTERN}\$" | sort | head -n -"${RETAIN}"); do
+for VOL in $(ls "${TO}" | grep "^${VOLUME}-" | sort | head -n -"${RETAIN}"); do
     btrfs subvolume delete "${TO}/${VOL}"
 done
 sync
