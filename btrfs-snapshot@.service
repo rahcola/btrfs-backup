@@ -5,4 +5,4 @@ After=%i.mount
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/btrfs-snapshot.sh %I %I/snapshots 24
+ExecStart=/usr/local/bin/btrfs-snapshot.py -r 24 %I %I/snapshots
