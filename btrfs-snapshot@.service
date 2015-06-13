@@ -5,4 +5,4 @@ After=%i.mount
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/btrfs-snapshot.py -r 24 %I %I/snapshots
+ExecStart=/bin/sh -c '/usr/local/bin/btrfs-snapshot.py -r 24 $(/usr/bin/systemd-escape -up %i) snapshots'
